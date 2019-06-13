@@ -1,0 +1,10 @@
+--tableName 长度 <= 24
+create or replace trigger {owner}.TR_{tableName}_BI
+before insert on {tableName} for each row
+declare
+ v_trigger_date DATE :=sysdate;
+begin
+    :new.created_date := v_trigger_date;
+    :new.updated_date := v_trigger_date;
+end;
+/

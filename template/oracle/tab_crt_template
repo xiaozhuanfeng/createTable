@@ -1,0 +1,7 @@
+create table {owner}.{tableName}
+(
+{columns}
+);
+
+comment on table {owner}.{tableName} is '{tableDescribe}';
+{comments}

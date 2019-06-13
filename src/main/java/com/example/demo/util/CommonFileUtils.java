@@ -39,7 +39,11 @@ public class CommonFileUtils {
         if (!fileParent.exists()) {
             fileParent.mkdirs();
         }
-        file.createNewFile();
+
+        if(!file.exists()){
+            file.createNewFile();
+        }
+
         return file;
     }
 
@@ -477,8 +481,13 @@ public class CommonFileUtils {
 
     public static void main(String[] args) throws IOException {
         //String str = "发生肯德基发生大师傅士大夫 \n  发生打开房间啊开始JFK \n";
-        String filePath = ProjectPathUtils.getRootPath("/file/test.txt");
-        System.out.println(filePath);
+        String filePath = ProjectPathUtils.getRootPath("file/test.txt");
+        //CommonFileUtils.randomWrite2File("Hello world", filePath, true, 1024);
+        File file = createFileAbsolute(filePath);
+
+        String content = scannerReadFile(filePath,"UTF-8");
+
+        System.out.println(content);
         //System.out.println(str.length());
         //System.out.println(str.getBytes().length);
 

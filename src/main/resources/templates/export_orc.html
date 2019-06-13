@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>建表工具</title>
+
+    <!-- css 引用-->
+    <link rel="stylesheet" type="text/css" th:href="@{~/static/css/table.brief.css}"/>
+    <link rel="stylesheet" type="text/css" th:href="@{~/static/css/form.basic-grey.css}"/>
+    <link rel="stylesheet" type="text/css" th:href="@{~/static/css/button-brief.css}"/>
+    <link rel="stylesheet" type="text/css" th:href="@{~/static/css/multi-select.css}"/>
+
+    <!-- js 引用 -->
+    <script th:src="@{~/static/js/jquery_3.1.0_jquery.min.js}"></script>
+    <script th:src="@{~/static/js/jquery.multi-select.js}"></script>
+    <script th:src="@{~/static/js/ajax-export-1.0.js}"></script>
+
+</head>
+<style type="text/css">
+    .div-tbl{text-align: center;margin-top: 30px;}
+    .div-btn{text-align: center;margin-top: 20px;}
+    .div-select{
+        padding-bottom: 10px;
+        padding-left: 111px;
+    }
+    /* 自定义 */
+    .red-tip{color: red;float: right;text-align: left; position: absolute;}
+</style>
+
+<body>
+    <form th:action="@{/orc/createTbl}" method="post" class="basic-grey">
+        <h1>建表工具</h1>
+
+        <label>
+            <span class="lab-text">属主 :</span>
+            <input id="owner-w" type="text" name="owner" placeholder="输入属主" value="FIXDATA"/><span class="red-tip">*</span>
+        </label>
+
+        <label>
+            <span class="lab-text">表名 :</span>
+            <input id="tableName-w" type="text" name="tableName" placeholder="输入表名" value="L_TBL_USER"/><span class="red-tip">*</span>
+        </label>
+
+        <label>
+            <span class="lab-text">表注释 :</span>
+            <input id="tableDescribe-w" type="text" name="tableDescribe" placeholder="输入表注释" value="用户表" /><span class="red-tip">*</span>
+        </label>
+
+        <label>
+            <span class="lab-text"> 自动生成:</span>
+            <select id="autoFlag-w",name="autoFlag">
+                <option value="Yes" selected>Yes</option>
+                <option value="No">No</option>
+            </select>
+            <span class="lab-text-tip">创建时间、更新时间、创建人和更新人</span>
+        </label>
+
+        <div class="div-tbl">
+
+            <h1>列设置</h1>
+            <table class="bordered" cellspacing="0" border="0" align="center" valign="center">
+                <thead>
+                <tr>
+                    <th>序号</th>
+                    <th>列名</th>
+                    <th>注释</th>
+                    <th>类型</th>
+                    <th>是否可空</th>
+                    <th>默认值</th>
+                </tr>
+
+
+                </thead>
+                <tbody id="tbody_col">
+                </tbody>
+            </table>
+
+            <div class="div-btn">
+                <button id="addCol" class="btn btn-primary">Add</button>
+                <button id="removeCol" class="btn btn-primary">Remove</button>
+            </div>
+        </div>
+
+        <div class="div-tbl">
+            <h1>索引设置</h1>
+            <table class="bordered" cellspacing="0" border="0" align="center" valign="center">
+                <thead>
+                <tr>
+                    <th>序号</th>
+                    <th>键列</th>
+                    <th>类型</th>
+                </tr>
+                </thead>
+                <tbody id="tbody_inx">
+                </tbody>
+            </table>
+
+            <div class="div-btn">
+                <button id="add-inx" class="btn btn-primary">Add</button>
+                <button id="remove-inx" class="btn btn-primary">Remove</button>
+            </div>
+        </div>
+
+
+        <div class="div-tbl">
+            <h1>授权设置</h1>
+            <table class="bordered" cellspacing="0" border="0" align="center" valign="center">
+                <thead>
+                <tr>
+                    <th>序号</th>
+                    <th>角色名</th>
+                    <th>权限</th>
+                </tr>
+
+
+                </thead>
+                <tbody id="tbody_owner">
+                </tbody>
+            </table>
+
+            <div class="div-btn">
+                <button id="add-owner" class="btn btn-primary">Add</button>
+                <button id="remove-owner" class="btn btn-primary">Remove</button>
+            </div>
+        </div>
+    </form>
+
+    <div class="div-tbl">
+        <h1></h1>
+        <div class="div-btn">
+            <button id="commitClo" class="btn btn-primary">Commit</button>
+            <button id="testCommit" class="btn btn-primary">Test</button>
+        </div>
+    </div>
+
+
+    <script>
+
+        $("#testCommit").on("click",function(){
+            var testData = {
+                "owner": "FIXDATA",
+                "tableName": "L_TBL_USER",
+                "tableDescribe": "用户表",
+                "autoFlag": "Yes",
+                "columnList": [{
+                    "columnName": "id",
+                    "columnDescribe": "",
+                    "columnType": "varchar2(30)",
+                    "columnNullFlag": "No",
+                    "defaultVal": ""
+                }, {
+                    "columnName": "name",
+                    "columnDescribe": "",
+                    "columnType": "VARCHAR2(30)",
+                    "columnNullFlag": "No",
+                    "defaultVal": ""
+                }, {
+                    "columnName": "age",
+                    "columnDescribe": "",
+                    "columnType": "number(2)",
+                    "columnNullFlag": "No",
+                    "defaultVal": ""
+                }],
+                "inxList": [{
+                    "owner": "FIXDATA",
+                    "tableName": "L_TBL_USER",
+                    "inxColumnNames": "id",
+                    "indexType": "1"
+                }],
+                "grtList": [{
+                    "owner": "FIXDATA",
+                    "tableName": "L_TBL_USER",
+                    "roleName": "chen",
+                    "operateArr": "select,insert,update,delete"
+                }]
+            };
+
+            ajaxExportFuc("/export/orcSql",testData);
+        });
+
+        var commonFuc = {
+            "isEmptyObject" : function(obj){
+                for(var key in obj){
+                    return false
+                };
+                return true
+            },
+            "regExp": function(content,regu) {
+                var re = new RegExp(regu),
+                    upContent = content.trim().toUpperCase();
+                if (re.test(upContent)) {
+                    return true;
+                }else{
+                    return false;
+                }
+            },
+            "regExpColType": function(content) {
+                var requArr = [/^(VARCHAR2\()([1-9])\d*\)$/,/^(CHAR\()([1-9])\d*\)$/,/^(NUMBER\()([1-9])\d*\)$/,/^DATE$/,/^BLOB$/,/^CLOB$/],
+                    passFlag = false;
+                var i;
+                for(i in requArr){
+                    passFlag = commonFuc.regExp(content,requArr[i]);
+                    if(passFlag){
+                        //console.log(content,requArr[i]);
+                        break;
+                    }
+                }
+                return passFlag;
+            },
+            "addElement":function(arr,targetEle){
+                var index = arr.indexOf(targetEle);
+                if (index == -1) {
+                    //去重复
+                    arr.push(targetEle);
+                }
+            },
+            "removeElement":function(arr,targetEle){
+                var index = arr.indexOf(targetEle);
+                if (index > -1) {
+                    //splice(index,num,[replaceStr])   index:位置 ，num:数量 ，replaceStr：替换的字符串
+                    //从index位置，移除num个元素，用replaceStr替换（可选）
+                    arr.splice(index, 1);
+                }
+            },
+            "getTrSno":function(tr){
+                var sno = 0,
+                    $tr = $(tr);
+                if( typeof($tr[0]) != "undefined"){
+                    //未找到Jquery对象
+                    sno = Number($tr.find("td:first").text());
+                }
+                return sno;
+            }
+        };
+
+        var ajaxExportFuc= function(url,tableObj){
+            console.log(tableObj);
+            $.ajax({
+                type: "post",
+                url: url,    //向后端请求数据的url
+                data: JSON.stringify(tableObj) ,
+                dataType:"text",//返回数据类型
+                //默认application/x-www-form-urlencoded;charset=UTF-8
+                //springmvc @RequestBody注解做提交json字符串自动绑定到pojo入参时
+                contentType: "application/json;charset=UTF-8",
+                success: function (data) {
+                    var jsonData = JSON.parse(data);
+                    if(jsonData["result"] === "1"){
+                        batchDownLoadFile(jsonData["body"]);
+                    }
+                },error:function (data) {
+                    console.log(2222);
+                }
+            });
+        };
+
+        $("#commitClo").on("click",function(){
+           try{
+               var tableObj = tableOptions();
+               if(!commonFuc.isEmptyObject(tableObj)){
+                   //XXX 获取列表属性
+                   var columnObjArr  = columnOptionObjArr();
+                   if(columnObjArr.length > 0){
+                       tableObj["columnList"] = columnObjArr;
+
+                       //索引
+                       var inxArr = getInxOptionsArr();
+                       if(inxArr.length > 0){
+                           tableObj["inxList"] = inxArr;
+                       }
+
+                       //授权
+                       var grtArr = getGrtOptionsArr();
+                       if(grtArr.length > 0){
+                           tableObj["grtList"] = grtArr;
+                       }
+                       ajaxExportFuc("/export/orcSql",tableObj);
+                   }
+               }
+           }catch (e) {
+                console.log(e);
+           }
+            //不提交
+            return false;
+        });
+
+        var tableOptions = function(){
+            var owner = $("#owner-w").val();
+            if(owner == null || owner.trim() === ''){
+                alert("属主不能为空！");
+                return {};
+            }
+            var tableName = $("#tableName-w").val();
+            if(tableName == null || tableName.trim() === ''){
+                alert("表名不能为空！");
+                return {};
+            }
+            var tableDescribe = $("#tableDescribe-w").val();
+            if(tableDescribe == null || tableDescribe.trim() === ''){
+                alert("表注释不能为空！");
+                return {};
+            }
+
+            var autoFlag = $("#autoFlag-w").val();
+
+            var tableObj = {};
+            tableObj["owner"] = owner;
+            tableObj["tableName"] = tableName;
+            tableObj["tableDescribe"] = tableDescribe;
+            tableObj["autoFlag"] = autoFlag;
+
+            return tableObj;
+        },columnOptionObjArr = function(){
+            var $tbody_col = $("#tbody_col"),
+                $trArr = $tbody_col.find("tr"),
+                colTemplageArr = ["columnName","columnDescribe","columnType","columnNullFlag","defaultVal"],
+                colColumnTipObj = {"columnName":"请输入列名！","columnType":"请输入类型！"},
+                columnOptionObjArr = [],
+                passFlag = true,
+                repeatColNameArr = [];
+
+            $.each($trArr,function (key,tr) {
+                var index = Number(key) + 1,
+                    columnOptionObj = {};
+                var i;
+                for (i in colTemplageArr){
+                    var colTemp = colTemplageArr[i],
+                        columAttr = colTemp +""+index,
+                        $input = $(tr).find("#"+columAttr),
+                        iptval = $input.val()+"",
+                        val = iptval.trim();
+
+                    columnOptionObj[colTemp] = val;
+
+                    //必填项
+                    if(val == null || val.trim() === ""){
+                        if(colColumnTipObj[colTemp] != undefined){
+                            alert(colColumnTipObj[colTemp]);
+                            passFlag = false;
+                            //跳出当前循环
+                            break;
+                        }
+                    }
+
+                    //类型项
+                    if("columnType" === colTemp){
+                        passFlag = commonFuc.regExpColType(val);
+                        if(!passFlag){
+                            alert("字段类型错误！");
+                            break;
+                        }
+                    }
+
+                    //字段重复校验
+                    if("columnName" === colTemp){
+                        var repeatInx = repeatColNameArr.indexOf(val);
+                        if(repeatInx > -1){
+                            //有重复字段
+                            alert("字段重复！");
+                            passFlag = false;
+                            break;
+                        }else{
+                            repeatColNameArr.push(val);
+                        }
+                    }
+                }
+
+                if(!commonFuc.isEmptyObject(columnOptionObj)){
+                    columnOptionObjArr.push(columnOptionObj);
+                }
+
+                if(!passFlag){
+                    //跳出当前循环
+                    return false;
+                }
+            });
+
+            if(!passFlag){
+                columnOptionObjArr = [];
+            }
+
+            return columnOptionObjArr;
+        },getInxOptionsArr = function(){
+            //获取索引数据
+            var owner = $("#owner-w").val(),
+                tableName = $("#tableName-w").val(),
+                $tbody_inx = $("#tbody_inx"),
+                inxObj = {},
+                inxObjArr = [];
+
+            //获取所有 indexType
+            var indexTypeArr =  [],
+                inxColumnNamesArr = [];
+
+            $tbody_inx.find("select[name^='indexType']").each(function(){
+                indexTypeArr.push($(this).val());
+            });
+
+            $tbody_inx.find("select[name^='inxColumnNames']").each(function(){
+                inxColumnNamesArr.push($(this).val());
+            });
+
+            for(var i in indexTypeArr){
+                inxObj["owner"]=owner.trim();
+                inxObj["tableName"]=tableName.trim();
+                var trInxColumnNamesArr = inxColumnNamesArr[i];
+                if(trInxColumnNamesArr.length == 0){
+                    alert("注意：索引存在空列！");
+                    continue;
+                }else{
+                    inxObj["inxColumnNames"]=trInxColumnNamesArr.join(",");
+                }
+                inxObj["indexType"]=indexTypeArr[i];
+                inxObjArr.push(inxObj);
+                inxObj={};
+            }
+            return inxObjArr;
+        },getGrtOptionsArr = function(){
+            var owner = $("#owner-w").val(),
+                tableName = $("#tableName-w").val(),
+                $tbody_owner = $("#tbody_owner"),
+                grtObj = {},
+                grtObjArr = [];
+
+            var roleNameArr = [],
+                operateArr = [],
+                operateList = [];
+            $tbody_owner.find("input[name^='roleName']").each(function(){
+                roleNameArr.push($(this).val());
+            });
+
+            $tbody_owner.find("tr[id^='tr_owner']").each(function(){
+                $(this).find("input[name^='operateArr']:checked").each(function(){
+                   operateArr.push($(this).val());
+                });
+                operateList.push(operateArr.join(","));
+                operateArr = [];
+            });
+
+           /* console.log(roleNameArr);
+            console.log(operateList);*/
+
+            for(var i in roleNameArr){
+                grtObj["owner"]=owner.trim();
+                grtObj["tableName"]=tableName.trim();
+
+                var roleName = roleNameArr[i].trim();
+                if(roleName === ""){
+                    alert("注意：角色名不能为空！");
+                    continue;
+                }else{
+                    grtObj["roleName"]=roleName;
+                }
+
+                if(operateList[i]=== ""){
+                    alert("注意：角色存在空操作设置！");
+                    continue;
+                }else{
+                    grtObj["operateArr"]=operateList[i];
+                }
+                grtObjArr.push(grtObj);
+                grtObj={};
+            }
+            return grtObjArr;
+        };
+
+
+        $("#addCol").on("click",function(){
+            var $tbody_col = $("#tbody_col"),
+                $tr = $tbody_col.find("tr:last"),
+                tr_count = 0;
+
+            if( typeof($tr[0]) != "undefined"){
+                //未找到Jquery对象
+                tr_count = Number($tr.find("td:first").text());
+            }
+
+            tr_count = tr_count + 1;
+
+            $newTr = $("<tr id='tr_col"+tr_count+"'></tr>");
+            var tdArr = [];
+            tdArr = getColByNo(tr_count);
+            $newTr.append(tdArr.join(""));
+            $tbody_col.append($newTr);
+
+            //不提交
+            return false;
+        });
+
+        $("#removeCol").on("click",function(){
+            var $tbody_col = $("#tbody_col"),
+                $tr = $tbody_col.find("tr:last");
+
+            if( typeof($tr[0]) != "undefined"){
+                $tr.remove("tr:last");
+            }
+
+            //不提交
+            return false;
+        });
+
+        $("#add-owner").on("click",function(){
+            var $tbody_owner = $("#tbody_owner"),
+                $tr = $tbody_owner.find("tr:last"),
+                tr_count = 0;
+
+            if( typeof($tr[0]) != "undefined"){
+                //未找到Jquery对象
+                tr_count = Number($tr.find("td:first").text());
+            }
+
+            tr_count = tr_count + 1;
+
+            $newTr = $("<tr id='tr_owner"+tr_count+"'></tr>");
+            var tdArr = [];
+            tdArr = getOwnerByNo(tr_count);
+            $newTr.append(tdArr.join(""));
+            $tbody_owner.append($newTr);
+
+            //不提交
+            return false;
+        });
+
+        $("#remove-owner").on("click",function(){
+            var $tbody_owner = $("#tbody_owner"),
+                $tr = $tbody_owner.find("tr:last");
+
+            if( typeof($tr[0]) != "undefined"){
+                $tr.remove("tr:last");
+            }
+            //不提交
+            return false;
+        });
+
+        $("#add-inx").on("click",function(){
+            try{
+                var $tbody_inx = $("#tbody_inx"),
+                    $tr = $tbody_inx.find("tr:last"),
+                    tr_count = 0;
+
+                if( typeof($tr[0]) != "undefined"){
+                    //未找到Jquery对象
+                    tr_count = Number($tr.find("td:first").text());
+                }
+
+                tr_count = tr_count + 1;
+
+                $newTr = $("<tr id='tr_inx"+tr_count+"'></tr>");
+                var tdArr = [];
+                tdArr = getInxByNo(tr_count);
+
+                if(tdArr.length > 0){
+                    $newTr.append(tdArr.join(""));
+                    $tbody_inx.append($newTr);
+
+                    //$("#callbacks").multiSelect();
+                    $trArr = $tbody_inx.find("tr");
+                    $.each($trArr,function (key,tr) {
+                        $(tr).find("select[multiple='multiple']").multiSelect();
+                    });
+                }else{
+                    alert("请设置列！");
+                }
+            }catch (e) {
+                console.log(e);
+            }
+            //不提交
+            return false;
+        });
+
+        $("#remove-inx").on("click",function(){
+            var $tbody_inx = $("#tbody_inx"),
+                $tr = $tbody_inx.find("tr:last");
+
+            if( typeof($tr[0]) != "undefined"){
+                $tr.remove("tr:last");
+            }
+            //不提交
+            return false;
+        });
+
+        var getColByNo = function(i){
+            var tdArr = [];
+            tdTempArr = getColTemplateStr();
+
+            $.each(tdTempArr,function (key,val) {
+                var col = val.replace(/{index}/g,i);
+                tdArr.push(col)
+            });
+
+            return tdArr;
+        }, getColTemplateStr = function(){
+                var tdTempArr =[],
+                    td1 = "<td>{index}</td>",
+                    td2 = "<td><input id=\"columnName{index}\" type=\"text\" name=\"columnName{index}\" /><span class=\"red-tip repeat-valid\">*</span></td>",
+                    td3 = "<td><input id=\"columnDescribe{index}\" type=\"text\" name=\"columnDescribe{index}\"/></td>",
+                    td4 = "<td><input class=\"upcase\" id=\"columnType{index}\" type=\"text\" name=\"columnType{index}\" title=\"VARCHAR2,CHAR,NUMBER,DATE,BLOB,CLOB\"/> <span class=\"red-tip\">*</span></td>",
+                    td5 = "<td>\n" +
+                        "                        <select id=\"columnNullFlag{index}\" name=\"columnNullFlag{index}\">\n" +
+                        "                            <option value=\"No\" selected>否</option>\n" +
+                        "                            <option value=\"Yes\">是</option>\n" +
+                        "                        </select>\n" +
+                        "                    </td>",
+                    td6 = "<td><input id=\"defaultVal{index}\" type=\"text\" name=\"defaultVal{index}\" /></td>";
+
+                    tdTempArr.push(td1);
+                    tdTempArr.push(td2);
+                    tdTempArr.push(td3);
+                    tdTempArr.push(td4);
+                    tdTempArr.push(td5);
+                    tdTempArr.push(td6);
+                    return tdTempArr;
+        },getOwnerByNo = function (i) {
+            var tdArr = [],
+            tdTempArr = getOwnerTemplateStr();
+
+            $.each(tdTempArr,function (key,val) {
+                var col = val.replace(/{index}/g,i);
+                tdArr.push(col)
+            });
+
+            return tdArr;
+        },getOwnerTemplateStr = function(){
+            var tdTempArr =[],
+                td1 = "<td>{index}</td>",
+                td2 = "<td><input id=\"roleName{index}\" type=\"text\" name=\"roleName{index}\"></td>",
+                td3 = "<td>\n" +
+                    "       <input type=\"checkbox\" name=\"operateArr{index}\" value=\"select\" /><span class=\"lab-text-tip\">select</span>\n" +
+                    "       <input type=\"checkbox\" name=\"operateArr{index}\" value=\"insert\" /><span class=\"lab-text-tip\">insert</span>\n" +
+                    "       <input type=\"checkbox\" name=\"operateArr{index}\" value=\"update\" /><span class=\"lab-text-tip\">update</span>\n" +
+                    "       <input type=\"checkbox\" name=\"operateArr{index}\" value=\"delete\" /><span class=\"lab-text-tip\">delete</span>\n" +
+                    " </td>";
+
+            tdTempArr.push(td1);
+            tdTempArr.push(td2);
+            tdTempArr.push(td3);
+            return tdTempArr;
+        }, getInxByNo = function (i) {
+                var tdArr = [],
+                    tdTempArr = getInxTemplateStr();
+
+                $.each(tdTempArr,function (key,val) {
+                    var col = val.replace(/{index}/g,i);
+                    tdArr.push(col)
+                });
+
+                return tdArr;
+        }, getInxTemplateStr = function(){
+                var $tbody_col = $("#tbody_col"),
+                    optionsArr = [];
+                $trArr = $tbody_col.find("tr");
+                $.each($trArr,function (key,tr) {
+                    var index = Number(key) + 1,
+                        ipt_columnName = "columnName"+index,
+                        columnName = $(tr).find("input[name='"+ipt_columnName+"']").val(),
+                        optionStr = "<option value='"+columnName+"'>"+columnName+"</option>";
+                    optionsArr.push(optionStr);
+                });
+
+                if(optionsArr.length <= 0){
+                    return [];
+                }
+
+                var tdTempArr =[],
+                    td1 = "<td>{index}</td>",
+                    td2 = " <td>\n" +
+                        "                            <div class=\"div-select\">\n" +
+                        "                             <select id='inxColumnNames{index}' name='inxColumnNames{index}' multiple='multiple'>\n" +
+                        optionsArr.join("")+
+                        "                              </select>\n" +
+                        "                            </div>\n" +
+                        "                        </td>",
+                    td3 = "<td>\n" +
+                        "                            <select id=\"indexType{index}\" name=\"indexType{index}\">\n" +
+                        "                                <option value=\"0\">Common</option>\n" +
+                        "                                <option value=\"1\">PK</option>\n" +
+                        "                                <option value=\"2\">Unique</option>\n" +
+                        "                            </select>\n" +
+                        "                        </td>";
+
+                tdTempArr.push(td1);
+                tdTempArr.push(td2);
+                tdTempArr.push(td3);
+                return tdTempArr;
+        }
+
+    </script>
+</body>
+
+
+</html>
